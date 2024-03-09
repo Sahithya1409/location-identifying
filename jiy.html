@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>India Map with Description and Wikipedia Image</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    #map {
+      height: 300px;
+    }
+    #info {
+      margin-top: 20px;
+    }
+    #info img {
+      max-width: 100%;
+    }
+  </style>
+</head>
+<body bgcolor="lightgreen">
+<img src="C:\Users\SAHIT\Downloads\wiki.jpeg" width=100 height=100/>
+<h1 align=center bgcolor="pink">wikipedia map</h1>
+  <div id="map"></div>
+  <div id="info"></div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    var map = L.map('map').setView([18.11243720,79.01929970], 6); // Centered on India
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    map.on('click', function(e) {
+      var latitude = e.latlng.lat.toFixed(6);
+      var longitude = e.latlng.lng.toFixed(6);
+
+      // Display latitude and longitude
+      var info = "<strong>Latitude:</strong> " + latitude + "<br><strong>Longitude:</strong> " + longitude + "<br>";
+
+      // Fetch information about the clicked location using reverse geocoding
+      fetch('https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + latitude + '&lon=' + longitude)
+        .then(response => response.json())
+        .then(data => {
+          var description = data.display_name;
+          info += "<strong>Description:</strong> " + description + "<br>";
+
+var geourl = `https://en.wikipedia.org/w/api.php?action=query&list=geosearch&gsradius=10&gscoord=17.4065, 78.4772`
+         
+          // Fetch Wikipedia information
+          var apiUrl = 'https://en.wikipedia.org/w/api.php?action=query&format=json&prop=extracts|pageimages&exintro&explaintext&origin=*';
+          var title = encodeURIComponent(description);
+          fetch(apiUrl + '&titles=' + title)
+            .then(response => response.json())
+            .then(wikiData => {
+              var pages = wikiData.query.pages;
+              var pageId = Object.keys(pages)[0];
+              var extract = pages[pageId].extract;
+              var imageUrl = pages[pageId].thumbnail ? pages[pageId].thumbnail.source : null;
+
+              // Display Wikipedia information
+          //    info += "<br><strong>Wikipedia Extract:</strong><br>" + extract;
+              if (imageUrl) {
+                info += "<br><img src='" + imageUrl + "' alt='Wikipedia Image'><br>";
+              }
+
+              // Display information
+              document.getElementById('info').innerHTML = info;
+            })
+            .catch(err => {
+              console.error('Failed to fetch Wikipedia information: ', err);
+            });
+        })
+        .catch(err => {
+          console.error('Failed to fetch location information: ', err);
+        });
+    });
+  </script>
+</body>
+</html>
